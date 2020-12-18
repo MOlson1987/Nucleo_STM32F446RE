@@ -5,7 +5,7 @@ static void ConfigureCoreClock(uint32_t sysClkSrc, uint32_t ahbPre, uint32_t apb
 static void EnableCoreClock(uint32_t clkSrc, bool pllOn);
 static void InitPlls(uint32_t pllSrc, uint32_t pllM, uint32_t pllN, uint32_t pllP, uint32_t pllQ, uint32_t pllR);
 static void ResetCoreClock(void);
-static void SetFlashLatency(uint32_t latency);
+static void SetFlashLatency(uint32_t waitStates);
 
 
 static void ConfigureCoreClock(uint32_t sysClkSrc, uint32_t ahbPre, uint32_t apb1Pre, uint32_t apb2Pre)
@@ -69,11 +69,38 @@ static void ResetCoreClock(void)
 }
 
 
-static void SetFlashLatency(uint32_t latency)
+static void SetFlashLatency(uint32_t waitStates)
 {
-    FLASH->ACR &= (0xFFFFFFF0 | (uint32_t)latency); // Clear old bits
-    FLASH->ACR |= (uint32_t)latency; // Set new bits
-    while ((FLASH->ACR & 0x0000000F) != (uint32_t)latency);
+    FLASH->ACR &= (0xFFFFFFF0 | waitStates); // Clear old bits
+    FLASH->ACR |= (0x0000000F & waitStates); // Set new bits
+    while ((FLASH->ACR & 0x0000000F) != waitStates); // Wait for register update.
+}
+
+
+// Reset the STM32F446RE to its default clock settings.
+void SYS_SystemInit(void)
+{
+  // Reset the RCC clock configuration to the default reset state
+  // Set HSION bit
+  RCC->CR |= (uint32_t)0x00000001;
+
+  // Reset CFGR register
+  RCC->CFGR = 0x00000000;
+
+  // Reset HSEON, CSSON and PLLON bits
+  RCC->CR &= (uint32_t)0xFEF6FFFF;
+
+  // Reset PLLCFGR register
+  RCC->PLLCFGR = 0x24003010;
+
+  // Reset HSEBYP bit
+  RCC->CR &= (uint32_t)0xFFFBFFFF;
+
+  // Disable all interrupts
+  RCC->CIR = 0x00000000;
+
+  // Vector Table Relocation in Internal FLASH
+  SCB->VTOR = FLASH_BASE;
 }
 
 

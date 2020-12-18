@@ -36,9 +36,10 @@ typedef enum TSystemState
 } TSystemState;
 
 
-uint32_t SYS_GetSystemTime(void);
+void SYS_SystemInit(void);
 void SYS_InitClocks(uint32_t clkSource, bool pllOn);
 void SYS_InitSysTick(uint32_t ticks);
 void SYS_PeriphClkEn(volatile uint32_t * port, uint32_t periph, bool enable);
+uint32_t SYS_GetSystemTime(void);
 
 #endif
